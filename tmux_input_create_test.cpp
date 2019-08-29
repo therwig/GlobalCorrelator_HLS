@@ -14,10 +14,10 @@ int main() {
 
     // input format: could be random or coming from simulation
     //RandomPFInputs inputs(37); // 37 is a good random number
-    //DiscretePFInputs inputs("regions_TTbar_PU140.dump");
+    //DiscretePFInputs inputs("/home/therwig/sandbox/GlobalCorrelator_HLS/data/regions_TTbar_PU140.dump");
     //DiscretePFInputs inputs("barrel_sectors_1x1_TTbar_PU140.dump");
-    //DiscretePFInputs inputs("barrel_sectors_1x1_TTbar_PU200.dump");
-    DiscretePFInputs inputs("dummy.dump");
+    DiscretePFInputs inputs("/home/therwig/sandbox/GlobalCorrelator_HLS/data/barrel_sectors_1x1_TTbar_PU200.dump");
+    //DiscretePFInputs inputs("dummy.dump");
     
     // input TP objects
     HadCaloObj calo[NCALO_TMUX]; EmCaloObj emcalo[NEMCALO_TMUX]; TkObj track[NTRACK_TMUX]; z0_t hwZPV;
@@ -28,6 +28,7 @@ int main() {
 
     //std::cout<<mp7DataLength<<std::endl;
     const int listLength = NFRAMES_APX_GEN0*((NTEST*TMUX_OUT)+(TMUX_IN-TMUX_OUT));
+    // 3 * (6*18 + 36-18) = 3*126 = 378
     //std::cout<<listLength<<std::endl;
     std::string datawords [NLINKS_APX_GEN0][listLength];
     for (int ia = 0; ia < NLINKS_APX_GEN0; ia++){
@@ -45,7 +46,7 @@ int main() {
         
 
         // initialize TP objects
-        for (int i = 0; i < NTRACK_TMUX; ++i) {
+        for (int i = 0; i < NTRACK_TMUX; ++i) { // 15 * 36 * 1 * 2 = 1080
             track[i].hwPt = 0; track[i].hwPtErr = 0; track[i].hwEta = 0; track[i].hwPhi = 0; track[i].hwZ0 = 0; 
         }
         for (int i = 0; i < NCALO_TMUX; ++i) {
@@ -158,11 +159,13 @@ int main() {
         }*/
         //FIXME skipping muons for now, makes link alignment with firmware work out
 
-        /*std::cout<<"Totals:"<<std::endl;
-        std::cout<<"\ttrack  = "<<ntracks<<std::endl;
-        std::cout<<"\tcalo   = "<<ncalos<<std::endl;
-        std::cout<<"\temcalo = "<<nemcalos<<std::endl;
-        std::cout<<"\tmu     = "<<nmus<<std::endl;*/
+        std::cout<<"\n\ntrack  = "<<ntracks<<std::endl;
+
+        // std::cout<<"Totals for event "<<ir<<":"<<std::endl;
+        // std::cout<<"\ttrack  = "<<ntracks<<std::endl;
+        // std::cout<<"\tcalo   = "<<ncalos<<std::endl;
+        // std::cout<<"\temcalo = "<<nemcalos<<std::endl;
+        // std::cout<<"\tmu     = "<<nmus<<std::endl;
 
         for (int ir = 0; ir < TMUX_OUT; ir++) {
 
@@ -171,15 +174,17 @@ int main() {
             //for (unsigned int in = 0; in < MP7_NCHANN; in++){
             //    printf("data_in[%i] = %i \n", in, (int) data_in[in]);
             //}
-    
+
+	    // per-test offset
             offset = NFRAMES_APX_GEN0*TMUX_OUT*test;
-            //std::cout<<offset<<std::endl;
 
             float tot_perc[4];
             int link_start[4];
             int add_off[4];
-            
-            tot_perc[0] = float(ir*NLINKS_PER_TRACK)/float(TMUX_OUT);
+
+	    // which of the 10 links for tracks are to be used for this time-slice
+	    // expressed as a 'percentage' and then an integer 
+            tot_perc[0] = float(ir*NLINKS_PER_TRACK)/float(TMUX_OUT); // (1..18)/18 * 10
             tot_perc[1] = float(ir*NLINKS_PER_EMCALO)/float(TMUX_OUT);
             tot_perc[2] = float(ir*NLINKS_PER_CALO)/float(TMUX_OUT);
             tot_perc[3] = float(ir*NLINKS_PER_MU)/float(TMUX_OUT);
@@ -187,14 +192,23 @@ int main() {
             link_start[1] = int(tot_perc[1]);
             link_start[2] = int(tot_perc[2]);
             link_start[3] = int(tot_perc[3]);
+	    //offset (in links*frames) as a function of the time slice considered
+	    // 3*36*(link pct) mod 3*36
             add_off[0] = int(float(NFRAMES_APX_GEN0*TMUX_IN)*tot_perc[0])%(NFRAMES_APX_GEN0*TMUX_IN);
             add_off[1] = int(float(NFRAMES_APX_GEN0*TMUX_IN)*tot_perc[1])%(NFRAMES_APX_GEN0*TMUX_IN);
             add_off[2] = int(float(NFRAMES_APX_GEN0*TMUX_IN)*tot_perc[2])%(NFRAMES_APX_GEN0*TMUX_IN);
             add_off[3] = int(float(NFRAMES_APX_GEN0*TMUX_IN)*tot_perc[3])%(NFRAMES_APX_GEN0*TMUX_IN);
+	    /* 
+	       First few entries in each for track case (nlink=10):
+	       link fractions are (0,0.55,1.11,1.66,2.22,...) 
+	       rounded to integers (which ACTUAL linkes) (0,0,1,1,2,...) 
+	       and leftover bits are offset by frames, indexed by (0,60,12,72,24,...)
+	    */
 
             int id = 0;
             unsigned int link_type = 0; //0=track, 1=emcalo, 2=calo, 3=mu
 
+	    //loop over the 10+10+10+2 = 32 links per region
             for (int link_ctr = 0; link_ctr < NLINKS_PER_REG; link_ctr++) {
 
                 if      (link_ctr < link_max[0]) link_type = 0;
@@ -204,19 +218,25 @@ int main() {
 
                 //std::cout<<"Region "<<ir<<" Link "<<link_ctr<<" : "<<tot_perc[link_type]<<" "<<link_start[link_type]<<" "<<add_off[link_type]<<std::endl;
 
+		// (**) advance to the particular link to be considered for this time slice: link start (0,10,20,...) + tmux offset (1..18)/18*10
                 if (link_ctr < link_min[link_type]+link_start[link_type]) {continue;}
-                
+
                 std::stringstream stream1;
-                int index = add_off[link_type];
-                if (index==0) {
+                int index = add_off[link_type]; // the "overlap mod(frame*link)" offset
+                if (index==0) { // only need the vertex for the first entry on this link
                     stream1 << "0x";
-                    stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]);
-                    stream1 << std::setfill('0') << std::setw(6) << std::hex << (((unsigned int)(hwZPV.range(9,0))) << 14) << "00";
+                    stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]); // TODO what is this data?
+                    stream1 << std::setfill('0') << std::setw(6) << std::hex << (((unsigned int)(hwZPV.range(9,0))) << 14) << "00"; // add z0 to the second string
+		    // full 64b word written (2 * 8 * 3=log_2(8))
                     datawords[link_off+link_ctr][offset] = stream1.str();
+		    // link off = (0,..)
+		    // link_ctr see (**)
+		    // offset is per-TEST (frames*TMUX_OUT)
                     id++;
                     index++;
                 }
                 else {
+		    // TODO: apparently remove the 6 least significant bits and replace with vertex ??
                     stream1 << datawords[link_off+link_ctr][offset].substr(0,10);
                     stream1 << std::setfill('0') << std::setw(6) << std::hex << (((unsigned int)(hwZPV.range(9,0))) << 14) << "00";
                     datawords[link_off+link_ctr][offset] = stream1.str();
@@ -225,24 +245,29 @@ int main() {
                 //std::cout<<"index="<<index<<" id"<<id<<std::endl;
         
                 // put the data on the link number = link_ctr;
+		// consider the rest of the frames from the offset 'add_off' up to the limit of 3*36=108
                 while (index < NFRAMES_APX_GEN0*TMUX_IN) {
                     stream1.str("");
                     stream1 << "0x";
-                    if (index%NFRAMES_APX_GEN0==0) {
+                    if (index%NFRAMES_APX_GEN0==0) { // pad every third frame with 32b data + 32b zeros?
                         stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]) << "00000000";
                         id+=1;
                     }
-                    else if (id == objDataLength[link_type]-1) {
+                    else if (id == objDataLength[link_type]-1) { // if is already at the max number of objects that may be stored
                         stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]) << "00000000";
                         id+=1;
                     }
                     else {
+		        //write two 32b words
                         stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id+1]);
                         stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]);
                         id+=2;
                     }
                     datawords[link_off+link_ctr][offset+index] = stream1.str();
                     index++;
+		    // write to link "link_off+link_ctr" and "offset+index" out of "listLength"=378
+		    //   here, sequentially deeper into the second index
+
                     // std::cout << stream1.str() << std::endl;
                     // std::cout << datawords[link_ctr][offset+(id/2)] << std::endl;
                     //printf("test = %i, link ctr = %i, clock = %i, offset = %i \n", test, link_ctr, offset+((id+1)/2), offset);
@@ -253,6 +278,8 @@ int main() {
                     }
                 }
                 if (id >= objDataLength[link_type]) link_ctr = link_max[link_type]-1;
+		//advance to the next link (corresponding to a different object) if the MAX is reached
+		//  (for loop will increment link immediately following this and will advance to the next object type)
             }
             
             //std::cout<<"-----------"<<std::endl;
