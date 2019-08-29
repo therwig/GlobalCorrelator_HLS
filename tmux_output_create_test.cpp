@@ -27,9 +27,10 @@ int main() {
     // input format: could be random or coming from simulation
     //RandomPFInputs inputs(37); // 37 is a good random number
     //DiscretePFInputs inputs("regions_TTbar_PU140.dump");
+    //DiscretePFInputs inputs("/home/therwig/sandbox/GlobalCorrelator_HLS/data/regions_TTbar_PU140.dump");
     //DiscretePFInputs inputs("barrel_sectors_1x1_TTbar_PU140.dump");
-    //DiscretePFInputs inputs("barrel_sectors_1x1_TTbar_PU200.dump");
-    DiscretePFInputs inputs("dummy.dump");
+    DiscretePFInputs inputs("/home/therwig/sandbox/GlobalCorrelator_HLS/data/barrel_sectors_1x1_TTbar_PU200.dump");
+    //DiscretePFInputs inputs("dummy.dump");
     
     // input TP objects
     HadCaloObj calo[NCALO_TMUX]; EmCaloObj emcalo[NEMCALO_TMUX]; TkObj track[NTRACK_TMUX]; z0_t hwZPV;
@@ -73,18 +74,23 @@ int main() {
         // get the inputs from the input object
         if (!inputs.nextRegion_tmux(calo, emcalo, track, mu, hwZPV)) break;
 
-        /*for (int i = 0; i < NTRACK_TMUX; ++i) {
-            std::cout<<track[i].hwPt<<"\t "<<track[i].hwEta<<"\t "<<track[i].hwPhi<<std::endl;
+	int ctr=0;
+        for (int i = 0; i < NTRACK_TMUX; ++i) {
+	  if(test==0 && track[i].hwPt){
+	    std::cout<<track[i].hwPt<<"\t "<<track[i].hwEta<<"\t "<<track[i].hwPhi<<std::endl;
+	    ctr++;
+	  }
         }
-        for (int i = 0; i < NCALO_TMUX; ++i) {
-            std::cout<<calo[i].hwPt<<"\t "<<calo[i].hwEta<<"\t "<<calo[i].hwPhi<<std::endl;
-        }
-        for (int i = 0; i < NEMCALO_TMUX; ++i) {
-            std::cout<<emcalo[i].hwPt<<"\t "<<emcalo[i].hwEta<<"\t "<<emcalo[i].hwPhi<<std::endl;
-        }
-        for (int i = 0; i < NMU_TMUX; ++i) {
-            std::cout<<mu[i].hwPt<<"\t "<<mu[i].hwEta<<"\t "<<mu[i].hwPhi<<std::endl;
-        }*/
+	std::cout << "found " << ctr << " tracks" << std::endl;
+        // for (int i = 0; i < NCALO_TMUX; ++i) {
+        //     std::cout<<calo[i].hwPt<<"\t "<<calo[i].hwEta<<"\t "<<calo[i].hwPhi<<std::endl;
+        // }
+        // for (int i = 0; i < NEMCALO_TMUX; ++i) {
+        //     std::cout<<emcalo[i].hwPt<<"\t "<<emcalo[i].hwEta<<"\t "<<emcalo[i].hwPhi<<std::endl;
+        // }
+        // for (int i = 0; i < NMU_TMUX; ++i) {
+        //     std::cout<<mu[i].hwPt<<"\t "<<mu[i].hwEta<<"\t "<<mu[i].hwPhi<<std::endl;
+        // }
 
         //VtxObj curvtx;    
         //simple_vtx_ref(track,&curvtx);
