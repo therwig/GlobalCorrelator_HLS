@@ -4,7 +4,7 @@ import argparse
 
 
 TMUX_OUT=18
-NEVENTS=6
+NEVENTS=1
 #CLKMAX=150
 #CLKMAX=108
 CLKMAX=TMUX_OUT*NEVENTS
@@ -330,19 +330,19 @@ def CompareOverlap(em_tracks,sim_tracks):
     print("""Test: Compare output tracks for all events
     Format is 'pt eta phi bits'. """)
     print("="*80)
-    print("Emulation-only tracks")
+    print("Emulation-only tracks",len(em_only))
     for tk in em_only:
         pt, pte, eta, phi, z0, qual = GetTrackParams(tk)
         print("  tk {:5} {:5} {:5} {:0>16x}".format(pt,eta,phi,tk))
     if not len(em_only): print("  (...none found...)")
 
-    print("Simulation-only tracks")
+    print("Simulation-only tracks",len(sim_only))
     for tk in sim_only:
         pt, pte, eta, phi, z0, qual = GetTrackParams(tk)
         print("  tk {:5} {:5} {:5} {:0>16x}".format(pt,eta,phi,tk))
     if not len(sim_only): print("  (...none found...)")
 
-    print("Commonly found tracks")
+    print("Commonly found tracks",len(common_tks))
     for tk in common_tks:
         pt, pte, eta, phi, z0, qual = GetTrackParams(tk)
         print("  tk {:5} {:5} {:5} {:0>16x}".format(pt,eta,phi,tk))
