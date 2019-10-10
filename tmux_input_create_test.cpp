@@ -225,7 +225,9 @@ int main() {
                 int index = add_off[link_type]; // the "overlap mod(frame*link)" offset
                 if (index==0) { // only need the vertex for the first entry on this link
                     stream1 << "0x";
-                    stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]); // TODO what is this data?
+		    // data_in = an mp7 data word (144x32b = 72x64b), holding all the input data for one TMOUT region
+		    //   since its an array of 32b uints, need to grab two at a time
+                    stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]); 
                     stream1 << std::setfill('0') << std::setw(6) << std::hex << (((unsigned int)(hwZPV.range(9,0))) << 14) << "00"; // add z0 to the second string
 		    // full 64b word written (2 * 8 * 3=log_2(8))
                     datawords[link_off+link_ctr][offset] = stream1.str();
