@@ -184,7 +184,7 @@ int main() {
 
 	    // which of the 10 links for tracks are to be used for this time-slice
 	    // expressed as a 'percentage' and then an integer 
-            tot_perc[0] = float(ir*NLINKS_PER_TRACK)/float(TMUX_OUT); // (1..18)/18 * 10
+            tot_perc[0] = float(ir*NLINKS_PER_TRACK)/float(TMUX_OUT); // (0..17)/18 * 10
             tot_perc[1] = float(ir*NLINKS_PER_EMCALO)/float(TMUX_OUT);
             tot_perc[2] = float(ir*NLINKS_PER_CALO)/float(TMUX_OUT);
             tot_perc[3] = float(ir*NLINKS_PER_MU)/float(TMUX_OUT);
@@ -229,7 +229,7 @@ int main() {
 		    //   since its an array of 32b uints, need to grab two at a time
                     stream1 << std::setfill('0') << std::setw(8) << std::hex << (unsigned int) (data_in[id]); 
                     stream1 << std::setfill('0') << std::setw(6) << std::hex << (((unsigned int)(hwZPV.range(9,0))) << 14) << "00"; // add z0 to the second string
-		    // full 64b word written (2 * 8 * 3=log_2(8))
+		    // full 64b word written (2 * 8 * 4=log_2(16))
                     datawords[link_off+link_ctr][offset] = stream1.str();
 		    // link off = (0,..)
 		    // link_ctr see (**)
