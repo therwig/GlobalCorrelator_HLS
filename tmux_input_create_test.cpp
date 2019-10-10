@@ -238,7 +238,11 @@ int main() {
                     index++;
                 }
                 else {
-		    // TODO: apparently remove the 6 least significant bits and replace with vertex ??
+		    // vertex encoding is super not straightforward. example vtx=23 -> "05c00000"
+		    // = 10 data bits + 22 zeros, but written as 10 data + 14 zeros + "00" but "0" = 4 bits each, so 22
+		    // the vertex is sent on ALL links at the beginning of a group 
+		    // e.g. on 0, 54, 108, ... for (#Frames*TMUXOUT)=3*18=54
+		    // -> for easy decoding, vtx = 0x05c >> 2 (e.g. 3*4=12 bits less two)
                     stream1 << datawords[link_off+link_ctr][offset].substr(0,10);
                     stream1 << std::setfill('0') << std::setw(6) << std::hex << (((unsigned int)(hwZPV.range(9,0))) << 14) << "00";
                     datawords[link_off+link_ctr][offset] = stream1.str();
